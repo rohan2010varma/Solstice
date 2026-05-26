@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#080809" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Solistice" />
+  <title>Solistice</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:       #080809;
+      --bg2:      #0f0f11;
+      --surface:  #131315;
+      --surface2: #1a1a1d;
+      --surface3: #222226;
+      --border:   rgba(255,255,255,0.06);
+      --border2:  rgba(255,255,255,0.11);
+      --text:     #e8e6e1;
+      --text-dim: rgba(232,230,225,0.55);
+      --text-muted: rgba(232,230,225,0.3);
+      --accent:   #7c6fff;
+      --accent2:  #a78bfa;
+      --accent-glow: rgba(124,111,255,0.12);
+      --teal:     #2dd4bf;
+      --amber:    #f59e0b;
+      --rose:     #f43f5e;
+      --radius:   18px;
+      --radius-sm: 12px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Cormorant', serif;
+      font-weight: 400;
+      min-height: 100dvh;
+      overflow-x: hidden;
+    }
+
+    /* Subtle ambient glow */
+    body::after {
+      content: '';
+      position: fixed;
+      top: -20%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 70%;
+      height: 40%;
+      background: radial-gradient(ellipse, rgba(124,111,255,0.07) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #app {
+      position: relative;
+      z-index: 1;
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    header {
+      padding: 18px 22px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(8,8,9,0.9);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      font-family: 'Cormorant', serif;
+      font-size: 28px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      color: var(--text);
+    }
+
+    .logo em {
+      font-style: italic;
+      color: var(--accent2);
+    }
+
+    .header-right { display: flex; gap: 8px; }
+
+    .icon-btn {
+      width: 34px; height: 34px;
+      border-radius: 10px;
+      border: 1px solid var(--border2);
+      background: var(--surface);
+      color: var(--text-dim);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+      transition: all 0.18s;
+    }
+    .icon-btn:hover { border-color: var(--accent); color: var(--accent2); }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      gap: 6px;
+      padding: 12px 22px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+
+    .tab {
+      flex-shrink: 0;
+      padding: 5px 13px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-muted);
+      font-family: 'Cormorant', serif;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+
+    .tab.active {
+      background: var(--accent-glow);
+      border-color: rgba(124,111,255,0.35);
+      color: var(--accent2);
+    }
+
+    .tab:hover:not(.active) { color: var(--text-dim); border-color: var(--border2); }
+
+    /* ── Main ── */
+    main {
+      flex: 1;
+      padding: 18px 18px 130px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* ── Empty state ── */
+    .empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      padding: 80px 24px;
+      text-align: center;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .empty-glyph {
+      width: 64px; height: 64px;
+      border-radius: 18px;
+      border: 1px solid var(--border2);
+      background: var(--surface);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px;
+      margin-bottom: 4px;
+    }
+
+    .empty h3 {
+      font-family: 'Cormorant', serif;
+      font-size: 22px;
+      font-weight: 400;
+      color: var(--text-dim);
+    }
+
+    .empty p {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.9;
+      max-width: 220px;
+      font-weight: 300;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 15px 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      animation: fadeUp 0.28s ease both;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card:hover {
+      border-color: var(--border2);
+      background: var(--surface2);
+      transform: translateY(-1px);
+    }
+
+    .card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+    }
+
+    /* Accent dot per type */
+    .card-dot {
+      position: absolute;
+      top: 15px; right: 15px;
+      width: 7px; height: 7px;
+      border-radius: 50%;
+    }
+    .card[data-type="link"] .card-dot { background: var(--teal); box-shadow: 0 0 6px var(--teal); }
+    .card[data-type="grocery"] .card-dot { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
+    .card[data-type="note"] .card-dot { background: var(--accent2); box-shadow: 0 0 6px var(--accent2); }
+    .card[data-type="image"] .card-dot { background: var(--rose); box-shadow: 0 0 6px var(--rose); }
+
+    .card-title {
+      font-family: 'Cormorant', serif;
+      font-size: 16px;
+      font-weight: 400;
+      color: var(--text);
+      line-height: 1.35;
+      margin-bottom: 6px;
+      padding-right: 20px;
+    }
+
+    .card-preview {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      line-height: 1.7;
+      margin-bottom: 10px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      font-weight: 300;
+    }
+
+    .card-domain {
+      font-size: 10px;
+      color: var(--teal);
+      margin-bottom: 5px;
+      font-weight: 500;
+      letter-spacing: 0.03em;
+    }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 2px;
+    }
+
+    .card-meta { display: flex; gap: 8px; align-items: center; }
+
+    .badge {
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 6px;
+      border: 1px solid;
+    }
+
+    .card[data-type="link"] .badge    { color: var(--teal);   border-color: rgba(45,212,191,0.25); background: rgba(45,212,191,0.07); }
+    .card[data-type="grocery"] .badge { color: var(--amber);  border-color: rgba(245,158,11,0.25); background: rgba(245,158,11,0.07); }
+    .card[data-type="note"] .badge    { color: var(--accent2);border-color: rgba(167,139,250,0.25);background: rgba(167,139,250,0.07);}
+    .card[data-type="image"] .badge   { color: var(--rose);   border-color: rgba(244,63,94,0.25);  background: rgba(244,63,94,0.07); }
+
+    .card-time { font-size: 10px; color: var(--text-muted); font-weight: 300; }
+
+    /* Delete btn */
+    .delete-btn {
+      width: 26px; height: 26px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px;
+      transition: all 0.18s;
+      flex-shrink: 0;
+    }
+    .delete-btn:hover { border-color: rgba(244,63,94,0.4); color: var(--rose); background: rgba(244,63,94,0.08); }
+
+    /* Grocery items */
+    .grocery-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+
+    .g-item {
+      display: flex; align-items: center; gap: 9px;
+      font-size: 12px; color: var(--text-dim); font-weight: 300;
+    }
+
+    .g-item input[type="checkbox"] {
+      accent-color: var(--amber);
+      width: 13px; height: 13px;
+      cursor: pointer; flex-shrink: 0;
+    }
+
+    .g-item.done span { text-decoration: line-through; color: var(--text-muted); }
+
+    /* Shared badge */
+    .shared-pill {
+      font-size: 9px;
+      color: var(--text-muted);
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      padding: 2px 7px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+    }
+
+    /* ── FAB ── */
+    .fab {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 50px;
+      padding: 15px 26px;
+      font-family: 'Cormorant', serif;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      display: flex; align-items: center; gap: 8px;
+      box-shadow: 0 4px 28px rgba(124,111,255,0.4), 0 0 0 1px rgba(124,111,255,0.3);
+      transition: all 0.2s;
+      z-index: 200;
+      white-space: nowrap;
+    }
+    .fab:hover {
+      background: var(--accent2);
+      box-shadow: 0 8px 36px rgba(124,111,255,0.5);
+      transform: translateX(-50%) translateY(-2px);
+    }
+    .fab:active { transform: translateX(-50%) translateY(0); }
+
+    /* ── Modal ── */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      z-index: 300;
+      display: flex; align-items: flex-end; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.22s;
+    }
+    .overlay.open { opacity: 1; pointer-events: all; }
+
+    .sheet {
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: 24px 24px 0 0;
+      width: 100%; max-width: 480px;
+      padding: 20px 22px 44px;
+      transform: translateY(100%);
+      transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+      max-height: 88dvh;
+      overflow-y: auto;
+    }
+    .overlay.open .sheet { transform: translateY(0); }
+
+    .sheet-handle {
+      width: 36px; height: 4px;
+      background: var(--surface3);
+      border-radius: 2px;
+      margin: 0 auto 22px;
+    }
+
+    .sheet-title {
+      font-family: 'Cormorant', serif;
+      font-size: 26px;
+      font-weight: 400;
+      margin-bottom: 22px;
+      color: var(--text);
+    }
+
+    .sheet-title span { font-style: italic; color: var(--accent2); }
+
+    /* Form */
+    .field { margin-bottom: 16px; }
+
+    .field label {
+      display: block;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 7px;
+    }
+
+    .field input, .field textarea, .field select {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      color: var(--text);
+      font-family: 'Cormorant', serif;
+      font-size: 13px;
+      font-weight: 300;
+      outline: none;
+      transition: border-color 0.18s;
+      resize: none;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    .field input:focus, .field textarea:focus, .field select:focus {
+      border-color: var(--accent);
+    }
+
+    .field input::placeholder, .field textarea::placeholder { color: var(--text-muted); }
+
+    .field textarea { min-height: 96px; line-height: 1.7; }
+
+    .field select option { background: var(--surface2); }
+
+    /* Type grid */
+    .type-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+
+    .type-opt {
+      border: 1px solid var(--border2);
+      background: var(--surface);
+      border-radius: var(--radius-sm);
+      padding: 10px 6px;
+      cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      transition: all 0.18s;
+      color: var(--text-muted);
+      font-family: 'Cormorant', serif;
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+    }
+
+    .type-opt .ico { font-size: 20px; }
+
+    .type-opt.on {
+      border-color: var(--accent);
+      background: var(--accent-glow);
+      color: var(--accent2);
+    }
+
+    /* Name row with AI button */
+    .name-wrap { position: relative; }
+    .name-wrap input { padding-right: 76px; }
+
+    .ai-btn {
+      position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+      background: var(--accent-glow);
+      border: 1px solid rgba(124,111,255,0.3);
+      border-radius: 7px;
+      padding: 4px 9px;
+      font-family: 'Cormorant', serif;
+      font-size: 9px;
+      font-weight: 600;
+      color: var(--accent2);
+      cursor: pointer;
+      transition: all 0.18s;
+      letter-spacing: 0.04em;
+    }
+    .ai-btn:hover { background: rgba(124,111,255,0.2); }
+    .ai-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .ai-label {
+      font-size: 9px; color: var(--accent2); font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      display: flex; align-items: center; gap: 4px; margin-bottom: 7px;
+    }
+
+    /* Thinking dots */
+    .dots { display: flex; gap: 4px; align-items: center; padding: 8px 0; }
+    .dots span {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--accent2);
+      animation: blink 1.2s infinite ease-in-out;
+    }
+    .dots span:nth-child(2) { animation-delay: 0.2s; }
+    .dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes blink { 0%,80%,100%{opacity:0.2;transform:scale(0.8)} 40%{opacity:1;transform:scale(1)} }
+
+    /* Buttons */
+    .btn-row { display: flex; gap: 10px; margin-top: 22px; }
+
+    .btn-main {
+      flex: 1; background: var(--accent);
+      color: #fff; border: none;
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      font-family: 'Cormorant', serif;
+      font-size: 13px; font-weight: 600;
+      letter-spacing: 0.04em;
+      cursor: pointer; transition: all 0.18s;
+    }
+    .btn-main:hover { background: var(--accent2); }
+    .btn-main:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .btn-cancel {
+      background: var(--surface);
+      color: var(--text-dim);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      padding: 14px 18px;
+      font-family: 'Cormorant', serif;
+      font-size: 13px; font-weight: 400;
+      cursor: pointer; transition: all 0.18s;
+    }
+    .btn-cancel:hover { color: var(--text); }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 94px; left: 50%;
+      transform: translateX(-50%) translateY(8px);
+      background: var(--surface3);
+      border: 1px solid var(--border2);
+      border-radius: 50px;
+      padding: 9px 20px;
+      font-size: 12px; font-weight: 500;
+      color: var(--text-dim);
+      opacity: 0; transition: all 0.25s; z-index: 500;
+      white-space: nowrap;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* Animations */
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="logo">Sol<em>istice</em></div>
+    <div class="header-right">
+      <button class="icon-btn" onclick="toast('Search coming soon')">🔍</button>
+      <button class="icon-btn" onclick="toast('Profile coming soon')">◎</button>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab active" onclick="setFilter('all',this)">All</button>
+    <button class="tab" onclick="setFilter('link',this)">Links</button>
+    <button class="tab" onclick="setFilter('grocery',this)">Lists</button>
+    <button class="tab" onclick="setFilter('note',this)">Notes</button>
+    <button class="tab" onclick="setFilter('image',this)">Images</button>
+    <button class="tab" onclick="setFilter('shared',this)">Shared</button>
+  </nav>
+
+  <main id="main"></main>
+
+  <button class="fab" onclick="openModal()">
+    <span>＋</span> Stash it
+  </button>
+</div>
+
+<!-- Modal -->
+<div class="overlay" id="overlay" onclick="overlayClick(event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Stash <span>something</span></div>
+
+    <div class="field">
+      <label>Type</label>
+      <div class="type-grid">
+        <button class="type-opt on" data-t="link" onclick="pickType('link',this)"><span class="ico">🔗</span>Link</button>
+        <button class="type-opt" data-t="grocery" onclick="pickType('grocery',this)"><span class="ico">🛒</span>List</button>
+        <button class="type-opt" data-t="note" onclick="pickType('note',this)"><span class="ico">📝</span>Note</button>
+        <button class="type-opt" data-t="image" onclick="pickType('image',this)"><span class="ico">🖼</span>Image</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Content / URL</label>
+      <textarea id="mContent" placeholder="Paste a link, write a note, or list your groceries…" oninput="onInput()"></textarea>
+    </div>
+
+    <div class="field">
+      <div class="ai-label">✦ AI name</div>
+      <div class="name-wrap">
+        <input type="text" id="mName" placeholder="Auto-named by AI…" />
+        <button class="ai-btn" id="aiBtn" onclick="doName()">✦ name</button>
+      </div>
+      <div id="thinking" style="display:none"><div class="dots"><span></span><span></span><span></span></div></div>
+    </div>
+
+    <div class="field">
+      <label>Category</label>
+      <select id="mCat">
+        <option value="">AI will suggest…</option>
+        <option value="work">Work</option>
+        <option value="personal">Personal</option>
+        <option value="shopping">Shopping</option>
+        <option value="recipes">Recipes</option>
+        <option value="travel">Travel</option>
+        <option value="learning">Learning</option>
+        <option value="health">Health</option>
+        <option value="inspiration">Inspiration</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Add to shared collection</label>
+      <select id="mCol">
+        <option value="">Just for me</option>
+        <option value="family">Family 👨‍👩‍👧</option>
+        <option value="work">Work Team 💼</option>
+      </select>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-main" id="saveBtn" onclick="save()">Save to Solistice</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toastEl"></div>
+
+<script>
+  const ICONS = { link:'🔗', grocery:'🛒', note:'📝', image:'🖼' };
+  let filter = 'all';
+  let type = 'link';
+  let items = [];
+  let uid = 1;
+  let nameTimer = null;
+
+  /* ── Render ── */
+  function render() {
+    const el = document.getElementById('main');
+    const list = filter === 'all' ? items
+      : filter === 'shared' ? items.filter(i => i.col)
+      : items.filter(i => i.type === filter);
+
+    if (!list.length) {
+      el.innerHTML = `
+        <div class="empty">
+          <div class="empty-glyph">${filter === 'all' ? '✦' : ICONS[filter] || '👥'}</div>
+          <h3>Nothing here yet</h3>
+          <p>Tap <em>Stash it</em> to save your first ${filter === 'all' ? 'thing' : filter}. Share directly from any app on your phone.</p>
+        </div>`;
+      return;
+    }
+
+    el.innerHTML = list.map((item, i) => renderCard(item, i * 40)).join('');
+
+    // restore checkboxes
+    list.filter(x => x.type === 'grocery' && x.groceries).forEach(item => {
+      item.groceries.forEach((g, idx) => {
+        const cb = document.getElementById(`cb-${item.id}-${idx}`);
+        if (cb) {
+          cb.checked = item.checked[idx];
+          if (item.checked[idx]) cb.closest('.g-item').classList.add('done');
+        }
+      });
+    });
+  }
+
+  function renderCard(item, delay) {
+    const shared = item.col ? `<span class="shared-pill">👥 ${item.col}</span>` : '';
+    const del = `<button class="delete-btn" onclick="del(event,${item.id})" title="Delete">✕</button>`;
+
+    if (item.type === 'grocery' && item.groceries) {
+      const rows = item.groceries.slice(0,5).map((g,i) => `
+        <div class="g-item" id="gi-${item.id}-${i}">
+          <input type="checkbox" id="cb-${item.id}-${i}" onchange="check(${item.id},${i},this)" />
+          <span>${g}</span>
+        </div>`).join('');
+      const more = item.groceries.length > 5
+        ? `<div style="font-size:10px;color:var(--text-muted);padding-top:2px">+${item.groceries.length-5} more</div>` : '';
+      return `
+        <div class="card" data-type="grocery" style="animation-delay:${delay}ms">
+          <div class="card-dot"></div>
+          <div class="card-title">${item.name}</div>
+          <div class="grocery-list">${rows}${more}</div>
+          <div class="card-footer">
+            <div class="card-meta">
+              <span class="badge">list</span>
+              <span class="card-time">${item.time}</span>
+              ${shared}
+            </div>
+            ${del}
+          </div>
+        </div>`;
+    }
+
+    const domain = item.domain ? `<div class="card-domain">↗ ${item.domain}</div>` : '';
+    const preview = item.preview || item.content.substring(0, 110);
+
+    return `
+      <div class="card" data-type="${item.type}" style="animation-delay:${delay}ms" onclick="openItem(${item.id})">
+        <div class="card-dot"></div>
+        <div class="card-title">${item.name}</div>
+        ${domain}
+        <div class="card-preview">${preview}</div>
+        <div class="card-footer">
+          <div class="card-meta">
+            <span class="badge">${item.cat || item.type}</span>
+            <span class="card-time">${item.time}</span>
+            ${shared}
+          </div>
+          ${del}
+        </div>
+      </div>`;
+  }
+
+  /* ── Actions ── */
+  function setFilter(f, el) {
+    filter = f;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    render();
+  }
+
+  function del(e, id) {
+    e.stopPropagation();
+    items = items.filter(i => i.id !== id);
+    render();
+    toast('Deleted');
+  }
+
+  function check(id, idx, cb) {
+    const item = items.find(i => i.id === id);
+    if (!item) return;
+    item.checked[idx] = cb.checked;
+    const row = document.getElementById(`gi-${id}-${idx}`);
+    if (row) cb.checked ? row.classList.add('done') : row.classList.remove('done');
+  }
+
+  function openItem(id) {
+    const item = items.find(i => i.id === id);
+    if (!item) return;
+    if (item.type === 'link' && item.content.startsWith('http')) {
+      window.open(item.content, '_blank');
+    } else {
+      toast(item.name);
+    }
+  }
+
+  /* ── Modal ── */
+  function openModal() {
+    document.getElementById('overlay').classList.add('open');
+    document.getElementById('mContent').value = '';
+    document.getElementById('mName').value = '';
+    document.getElementById('mCat').value = '';
+    document.getElementById('mCol').value = '';
+    type = 'link';
+    document.querySelectorAll('.type-opt').forEach(b => b.classList.toggle('on', b.dataset.t === 'link'));
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    document.getElementById('overlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function overlayClick(e) {
+    if (e.target === document.getElementById('overlay')) closeModal();
+  }
+
+  function pickType(t, el) {
+    type = t;
+    document.querySelectorAll('.type-opt').forEach(b => b.classList.remove('on'));
+    el.classList.add('on');
+    const ph = { link: 'Paste a link…', grocery: 'One item per line…', note: 'Write your note…', image: 'Paste image URL…' };
+    document.getElementById('mContent').placeholder = ph[t];
+  }
+
+  function onInput() {
+    clearTimeout(nameTimer);
+    if (document.getElementById('mContent').value.length > 12) {
+      nameTimer = setTimeout(doName, 1400);
+    }
+  }
+
+  /* ── AI naming ── */
+  async function doName() {
+    const content = document.getElementById('mContent').value.trim();
+    if (!content) return;
+    const btn = document.getElementById('aiBtn');
+    const th = document.getElementById('thinking');
+    btn.disabled = true;
+    th.style.display = 'block';
+    document.getElementById('mName').value = '';
+
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          messages: [{
+            role: 'user',
+            content: `You are a naming assistant for a personal save-it-later app called Solistice.
+
+The user saved this (type: ${type}):
+"${content}"
+
+Give it a short, natural, descriptive name.
+- Links: what the page is about (4-7 words)
+- Grocery lists: contextual name like "Weekly Shop" or "Dinner Party Supplies"
+- Notes: concise title
+- Images: what it shows
+
+Reply with ONLY the name. No quotes, no explanation. Max 8 words.`
+          }]
+        })
+      });
+      const data = await res.json();
+      const name = data.content?.[0]?.text?.trim() || '';
+      if (name) {
+        document.getElementById('mName').value = name;
+        if (!document.getElementById('mCat').value) suggestCat(content, name);
+      }
+    } catch {
+      document.getElementById('mName').placeholder = 'Name it yourself…';
+    } finally {
+      btn.disabled = false;
+      th.style.display = 'none';
+    }
+  }
+
+  async function suggestCat(content, name) {
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          messages: [{
+            role: 'user',
+            content: `Categorize: "${name}" — "${content.substring(0,150)}". Pick one: work, personal, shopping, recipes, travel, learning, health, inspiration. Reply with ONE word only.`
+          }]
+        })
+      });
+      const data = await res.json();
+      const cat = data.content?.[0]?.text?.trim()?.toLowerCase();
+      const valid = ['work','personal','shopping','recipes','travel','learning','health','inspiration'];
+      if (cat && valid.includes(cat)) document.getElementById('mCat').value = cat;
+    } catch {}
+  }
+
+  /* ── Save ── */
+  async function save() {
+    const content = document.getElementById('mContent').value.trim();
+    let name = document.getElementById('mName').value.trim();
+    const cat = document.getElementById('mCat').value;
+    const col = document.getElementById('mCol').value;
+    if (!content) { toast('Add some content first!'); return; }
+
+    const saveBtn = document.getElementById('saveBtn');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving…';
+
+    if (!name) { await doName(); name = document.getElementById('mName').value.trim() || content.substring(0, 40); }
+
+    let domain;
+    if (type === 'link') { try { domain = new URL(content).hostname.replace('www.',''); } catch {} }
+
+    const groceries = type === 'grocery' ? content.split('\n').filter(Boolean) : undefined;
+
+    items.unshift({
+      id: uid++, type, name, content,
+      preview: content.substring(0, 110),
+      groceries, checked: groceries ? groceries.map(() => false) : undefined,
+      cat: cat || type, col: col || null, domain,
+      time: 'just now'
+    });
+
+    filter = 'all';
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i === 0));
+    closeModal();
+    render();
+    toast('✦ Stashed!');
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Save to Solistice';
+  }
+
+  /* ── Toast ── */
+  function toast(msg) {
+    const el = document.getElementById('toastEl');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2400);
+  }
+
+  /* ── PWA share target ── */
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  const p = new URLSearchParams(location.search);
+  if (p.has('share-target')) {
+    const shared = p.get('text') || p.get('url') || '';
+    if (shared) setTimeout(() => {
+      openModal();
+      document.getElementById('mContent').value = shared;
+      type = shared.startsWith('http') ? 'link' : 'note';
+      document.querySelectorAll('.type-opt').forEach(b => b.classList.toggle('on', b.dataset.t === type));
+      doName();
+    }, 300);
+  }
+
+  render();
+</script>
+</body>
+</html>
