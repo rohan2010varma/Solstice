@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0d0d0f" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Solstice" />
+  <title>Solstice</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d0d0f;
+      --surface: #141416;
+      --surface2: #1c1c20;
+      --border: rgba(255,255,255,0.07);
+      --border2: rgba(255,255,255,0.13);
+      --text: #f0ede8;
+      --text-muted: rgba(240,237,232,0.4);
+      --text-dim: rgba(240,237,232,0.65);
+      --gold: #c9a84c;
+      --gold-soft: rgba(201,168,76,0.15);
+      --gold-glow: rgba(201,168,76,0.08);
+      --amber: #e8935a;
+      --teal: #5ab8b0;
+      --rose: #c97b7b;
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-weight: 300;
+      min-height: 100dvh;
+      overflow-x: hidden;
+    }
+
+    /* Ambient background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 80% 10%, rgba(201,168,76,0.06) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 50% at 10% 80%, rgba(90,184,176,0.04) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #app { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column; }
+
+    /* ── Header ── */
+    header {
+      padding: 20px 24px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(20px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13,13,15,0.85);
+    }
+
+    .logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 26px;
+      font-weight: 300;
+      letter-spacing: 0.08em;
+      color: var(--gold);
+    }
+
+    .logo span {
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    .header-actions { display: flex; gap: 10px; align-items: center; }
+
+    .icon-btn {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      border: 1px solid var(--border2);
+      background: var(--surface);
+      color: var(--text-dim);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      transition: all 0.2s;
+    }
+    .icon-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* ── Nav tabs ── */
+    .nav-tabs {
+      display: flex;
+      padding: 12px 24px;
+      gap: 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-tabs::-webkit-scrollbar { display: none; }
+
+    .tab {
+      flex-shrink: 0;
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--border2);
+      background: transparent;
+      color: var(--text-muted);
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      font-weight: 400;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tab.active {
+      background: var(--gold-soft);
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+    .tab:hover:not(.active) { border-color: var(--border2); color: var(--text-dim); }
+
+    /* ── Main content ── */
+    main { flex: 1; padding: 20px 20px 120px; display: flex; flex-direction: column; gap: 12px; }
+
+    /* ── Empty state ── */
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 60px 20px;
+      text-align: center;
+      animation: fadeIn 0.4s ease;
+    }
+
+    .empty-icon {
+      font-size: 48px;
+      opacity: 0.3;
+    }
+
+    .empty-state h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 300;
+      font-size: 22px;
+      color: var(--text-dim);
+    }
+
+    .empty-state p {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.8;
+      max-width: 240px;
+    }
+
+    /* ── Stash item card ── */
+    .stash-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.25s;
+      animation: slideUp 0.3s ease both;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stash-item::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      border-radius: 3px 0 0 3px;
+    }
+
+    .stash-item[data-cat="link"]::before { background: var(--teal); }
+    .stash-item[data-cat="grocery"]::before { background: var(--amber); }
+    .stash-item[data-cat="note"]::before { background: var(--gold); }
+    .stash-item[data-cat="image"]::before { background: var(--rose); }
+
+    .stash-item:hover {
+      border-color: var(--border2);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+
+    .item-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+
+    .item-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 17px;
+      font-weight: 400;
+      color: var(--text);
+      line-height: 1.3;
+      flex: 1;
+    }
+
+    .item-type {
+      font-size: 18px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .item-preview {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 10px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .item-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .item-meta {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .cat-badge {
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 20px;
+      border: 1px solid;
+    }
+
+    [data-cat="link"] .cat-badge { color: var(--teal); border-color: rgba(90,184,176,0.3); background: rgba(90,184,176,0.08); }
+    [data-cat="grocery"] .cat-badge { color: var(--amber); border-color: rgba(232,147,90,0.3); background: rgba(232,147,90,0.08); }
+    [data-cat="note"] .cat-badge { color: var(--gold); border-color: rgba(201,168,76,0.3); background: rgba(201,168,76,0.08); }
+    [data-cat="image"] .cat-badge { color: var(--rose); border-color: rgba(201,123,123,0.3); background: rgba(201,123,123,0.08); }
+
+    .item-time { font-size: 10px; color: var(--text-muted); }
+
+    .shared-badge {
+      font-size: 10px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    /* ── Grocery list items ── */
+    .grocery-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+
+    .grocery-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .grocery-item input[type="checkbox"] {
+      accent-color: var(--amber);
+      width: 14px; height: 14px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .grocery-item.checked span { text-decoration: line-through; color: var(--text-muted); }
+
+    /* ── FAB ── */
+    .fab {
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--gold);
+      color: #0d0d0f;
+      border: none;
+      border-radius: 50px;
+      padding: 16px 28px;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 24px rgba(201,168,76,0.35), 0 0 0 1px rgba(201,168,76,0.2);
+      transition: all 0.2s;
+      z-index: 200;
+      white-space: nowrap;
+    }
+
+    .fab:hover {
+      background: #d4b05e;
+      box-shadow: 0 8px 36px rgba(201,168,76,0.45), 0 0 0 1px rgba(201,168,76,0.3);
+      transform: translateX(-50%) translateY(-2px);
+    }
+
+    .fab:active { transform: translateX(-50%) translateY(0); }
+
+    /* ── Modal overlay ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(8px);
+      z-index: 300;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s;
+    }
+
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 24px 24px 0 0;
+      width: 100%;
+      max-width: 480px;
+      padding: 24px 24px 40px;
+      transform: translateY(100%);
+      transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+      max-height: 85dvh;
+      overflow-y: auto;
+    }
+
+    .modal-overlay.open .modal { transform: translateY(0); }
+
+    .modal-handle {
+      width: 36px; height: 4px;
+      background: var(--border2);
+      border-radius: 2px;
+      margin: 0 auto 20px;
+    }
+
+    .modal-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 24px;
+      font-weight: 300;
+      margin-bottom: 20px;
+      color: var(--text);
+    }
+
+    .modal-title span { color: var(--gold); font-style: italic; }
+
+    /* ── Form elements ── */
+    .field { margin-bottom: 16px; }
+
+    .field label {
+      display: block;
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .field input, .field textarea, .field select {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      font-weight: 300;
+      outline: none;
+      transition: border-color 0.2s;
+      resize: none;
+      -webkit-appearance: none;
+    }
+
+    .field input:focus, .field textarea:focus, .field select:focus {
+      border-color: var(--gold);
+    }
+
+    .field select option { background: var(--surface2); }
+
+    .field textarea { min-height: 100px; line-height: 1.7; }
+
+    .ai-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 9px;
+      color: var(--gold);
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .ai-badge::before {
+      content: '✦';
+      font-size: 8px;
+    }
+
+    .name-field-wrapper { position: relative; }
+
+    .name-field-wrapper input { padding-right: 80px; }
+
+    .ai-gen-btn {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: var(--gold-soft);
+      border: 1px solid rgba(201,168,76,0.3);
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      font-weight: 500;
+      color: var(--gold);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .ai-gen-btn:hover { background: rgba(201,168,76,0.25); }
+    .ai-gen-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .type-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .type-btn {
+      border: 1px solid var(--border2);
+      background: var(--surface2);
+      border-radius: var(--radius-sm);
+      padding: 10px 6px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
+      color: var(--text-muted);
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.05em;
+    }
+
+    .type-btn .emoji { font-size: 20px; }
+
+    .type-btn.selected {
+      border-color: var(--gold);
+      background: var(--gold-soft);
+      color: var(--gold);
+    }
+
+    .btn-row { display: flex; gap: 10px; margin-top: 20px; }
+
+    .btn-primary {
+      flex: 1;
+      background: var(--gold);
+      color: #0d0d0f;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary:hover { background: #d4b05e; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-secondary {
+      background: var(--surface2);
+      color: var(--text-dim);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      padding: 14px 18px;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-secondary:hover { border-color: var(--border2); color: var(--text); }
+
+    /* ── Thinking animation ── */
+    .thinking {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--gold);
+      padding: 10px 0;
+    }
+
+    .dot-pulse { display: flex; gap: 4px; }
+    .dot-pulse span {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--gold);
+      animation: pulse 1.2s infinite ease-in-out;
+    }
+    .dot-pulse span:nth-child(2) { animation-delay: 0.2s; }
+    .dot-pulse span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes pulse {
+      0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+      40% { opacity: 1; transform: scale(1); }
+    }
+
+    /* ── Collections / shared ── */
+    .collection-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      animation: slideUp 0.3s ease both;
+    }
+
+    .collection-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .collection-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 18px;
+      font-weight: 400;
+    }
+
+    .collection-count {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .collection-members {
+      display: flex;
+      gap: -4px;
+      align-items: center;
+      margin-top: 8px;
+    }
+
+    .avatar {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      border: 2px solid var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 500;
+      background: var(--gold-soft);
+      color: var(--gold);
+      margin-left: -6px;
+    }
+
+    .avatar:first-child { margin-left: 0; }
+
+    .share-btn {
+      background: transparent;
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .share-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%) translateY(10px);
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 50px;
+      padding: 10px 20px;
+      font-size: 11px;
+      color: var(--text-dim);
+      opacity: 0;
+      transition: all 0.3s;
+      z-index: 500;
+      white-space: nowrap;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── Animations ── */
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+    .section-label {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 4px 0 8px;
+    }
+
+    /* Link card special */
+    .link-domain {
+      font-size: 10px;
+      color: var(--teal);
+      margin-bottom: 4px;
+    }
+
+    .image-thumb {
+      width: 100%;
+      height: 120px;
+      background: var(--surface2);
+      border-radius: 8px;
+      margin-bottom: 10px;
+      object-fit: cover;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="logo">Sol<span>stice</span></div>
+    <div class="header-actions">
+      <button class="icon-btn" onclick="showSearch()" title="Search">🔍</button>
+      <button class="icon-btn" onclick="showProfile()" title="Profile">◎</button>
+    </div>
+  </header>
+
+  <nav class="nav-tabs" id="navTabs">
+    <button class="tab active" onclick="filterTab('all', this)">All</button>
+    <button class="tab" onclick="filterTab('link', this)">🔗 Links</button>
+    <button class="tab" onclick="filterTab('grocery', this)">🛒 Lists</button>
+    <button class="tab" onclick="filterTab('note', this)">📝 Notes</button>
+    <button class="tab" onclick="filterTab('image', this)">🖼 Images</button>
+    <button class="tab" onclick="filterTab('shared', this)">👥 Shared</button>
+  </nav>
+
+  <main id="mainContent"></main>
+
+  <button class="fab" onclick="openAddModal()">
+    <span>✦</span> Stash it
+  </button>
+</div>
+
+<!-- Add Modal -->
+<div class="modal-overlay" id="addModal" onclick="closeOnOverlay(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Stash <span>something</span></div>
+
+    <div class="field">
+      <label>Type</label>
+      <div class="type-grid">
+        <button class="type-btn selected" data-type="link" onclick="selectType('link', this)">
+          <span class="emoji">🔗</span>link
+        </button>
+        <button class="type-btn" data-type="grocery" onclick="selectType('grocery', this)">
+          <span class="emoji">🛒</span>list
+        </button>
+        <button class="type-btn" data-type="note" onclick="selectType('note', this)">
+          <span class="emoji">📝</span>note
+        </button>
+        <button class="type-btn" data-type="image" onclick="selectType('image', this)">
+          <span class="emoji">🖼</span>image
+        </button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Content / URL</label>
+      <textarea id="stashContent" placeholder="Paste a link, type a note, or a list of groceries..." oninput="onContentInput()"></textarea>
+    </div>
+
+    <div class="field">
+      <div class="ai-badge">AI-powered name</div>
+      <div class="name-field-wrapper">
+        <input type="text" id="stashName" placeholder="Auto-named by AI..." />
+        <button class="ai-gen-btn" id="aiBtn" onclick="generateName()">✦ name it</button>
+      </div>
+      <div id="thinkingIndicator" style="display:none">
+        <div class="thinking">
+          <div class="dot-pulse"><span></span><span></span><span></span></div>
+          Naming your stash...
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Category (optional)</label>
+      <select id="stashCategory">
+        <option value="">AI will suggest...</option>
+        <option value="work">Work</option>
+        <option value="personal">Personal</option>
+        <option value="shopping">Shopping</option>
+        <option value="recipes">Recipes</option>
+        <option value="travel">Travel</option>
+        <option value="learning">Learning</option>
+        <option value="inspiration">Inspiration</option>
+        <option value="health">Health</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Add to collection (shared)</label>
+      <select id="stashCollection">
+        <option value="">Just for me</option>
+        <option value="family">Family 👨‍👩‍👧</option>
+        <option value="work">Work Team 💼</option>
+        <option value="new">+ Create new collection</option>
+      </select>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" id="saveBtn" onclick="saveStash()">Save to Solstice</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── State ──
+  let currentFilter = 'all';
+  let selectedType = 'link';
+  let nameGenTimeout = null;
+
+  const EMOJIS = { link: '🔗', grocery: '🛒', note: '📝', image: '🖼' };
+
+  // Sample data
+  let stashes = [
+    {
+      id: 1, type: 'link', name: 'Minimalist home office setup guide',
+      content: 'https://www.thewirecutter.com/home-office-setup',
+      preview: 'Everything you need for a clean, distraction-free workspace in 2024.',
+      category: 'work', time: '2m ago', shared: null,
+      domain: 'thewirecutter.com'
+    },
+    {
+      id: 2, type: 'grocery', name: 'Sunday Market Run',
+      content: 'Eggs\nAvocados\nOat milk\nSourdough bread\nSpinach\nGarlic',
+      items: ['Eggs', 'Avocados', 'Oat milk', 'Sourdough bread', 'Spinach', 'Garlic'],
+      checked: [false, false, true, false, false, false],
+      category: 'shopping', time: '1h ago', shared: 'family'
+    },
+    {
+      id: 3, type: 'note', name: 'Meeting follow-up thoughts',
+      content: 'Talk to Sarah about the Q3 budget. Check the Figma file for updated designs. Push the launch to next week.',
+      preview: 'Talk to Sarah about the Q3 budget. Check the Figma file for updated designs.',
+      category: 'work', time: '3h ago', shared: 'work'
+    },
+    {
+      id: 4, type: 'link', name: 'Japanese ramen recipe to try',
+      content: 'https://www.seriouseats.com/tonkotsu-ramen-recipe',
+      preview: 'Rich, creamy tonkotsu broth with perfectly cooked chashu pork.',
+      category: 'recipes', time: 'yesterday', shared: null,
+      domain: 'seriouseats.com'
+    },
+    {
+      id: 5, type: 'note', name: 'Gift ideas for mum',
+      content: 'Silk scarf, the new Kazuo Ishiguro book, botanical candle from the market, spa voucher.',
+      preview: 'Silk scarf, the new Kazuo Ishiguro book, botanical candle from the market.',
+      category: 'personal', time: '2d ago', shared: null
+    },
+  ];
+
+  let nextId = 6;
+
+  // ── Render ──
+  function render() {
+    const main = document.getElementById('mainContent');
+    let filtered = currentFilter === 'all' ? stashes
+      : currentFilter === 'shared' ? stashes.filter(s => s.shared)
+      : stashes.filter(s => s.type === currentFilter);
+
+    if (filtered.length === 0) {
+      main.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">✦</div>
+          <h3>Nothing here yet</h3>
+          <p>Tap <em>"Stash it"</em> below to save your first link, note, or list. Share directly from any app on your phone.</p>
+        </div>`;
+      return;
+    }
+
+    main.innerHTML = filtered.map((s, i) => renderItem(s, i * 50)).join('');
+
+    // restore checkbox states
+    filtered.filter(s => s.type === 'grocery').forEach(s => {
+      s.items && s.items.forEach((item, idx) => {
+        const cb = document.getElementById(`cb-${s.id}-${idx}`);
+        if (cb) {
+          cb.checked = s.checked[idx] || false;
+          if (s.checked[idx]) cb.closest('.grocery-item').classList.add('checked');
+        }
+      });
+    });
+  }
+
+  function renderItem(s, delay = 0) {
+    const sharedBadge = s.shared
+      ? `<span class="shared-badge">👥 ${s.shared}</span>` : '';
+
+    if (s.type === 'grocery') {
+      const items = s.items || s.content.split('\n');
+      const listHtml = items.slice(0, 4).map((item, idx) => `
+        <div class="grocery-item" id="gi-${s.id}-${idx}">
+          <input type="checkbox" id="cb-${s.id}-${idx}" onchange="toggleCheck(${s.id}, ${idx}, this)" />
+          <span>${item}</span>
+        </div>`).join('');
+      const more = items.length > 4 ? `<div style="font-size:10px;color:var(--text-muted);padding-top:2px">+${items.length - 4} more</div>` : '';
+
+      return `
+        <div class="stash-item" data-cat="grocery" style="animation-delay:${delay}ms">
+          <div class="item-header">
+            <div class="item-title">${s.name}</div>
+            <div class="item-type">${EMOJIS[s.type]}</div>
+          </div>
+          <div class="grocery-list">${listHtml}${more}</div>
+          <div class="item-footer">
+            <div class="item-meta">
+              <span class="cat-badge">list</span>
+              <span class="item-time">${s.time}</span>
+            </div>
+            ${sharedBadge}
+          </div>
+        </div>`;
+    }
+
+    const domainHtml = s.domain ? `<div class="link-domain">↗ ${s.domain}</div>` : '';
+    const preview = s.preview || s.content.substring(0, 100);
+
+    return `
+      <div class="stash-item" data-cat="${s.type}" style="animation-delay:${delay}ms" onclick="openItem(${s.id})">
+        <div class="item-header">
+          <div class="item-title">${s.name}</div>
+          <div class="item-type">${EMOJIS[s.type]}</div>
+        </div>
+        ${domainHtml}
+        <div class="item-preview">${preview}</div>
+        <div class="item-footer">
+          <div class="item-meta">
+            <span class="cat-badge">${s.category || s.type}</span>
+            <span class="item-time">${s.time}</span>
+          </div>
+          ${sharedBadge}
+        </div>
+      </div>`;
+  }
+
+  // ── Filter ──
+  function filterTab(type, el) {
+    currentFilter = type;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    render();
+  }
+
+  // ── Checkbox for grocery ──
+  function toggleCheck(stashId, idx, cb) {
+    const stash = stashes.find(s => s.id === stashId);
+    if (!stash) return;
+    stash.checked[idx] = cb.checked;
+    const row = document.getElementById(`gi-${stashId}-${idx}`);
+    if (row) cb.checked ? row.classList.add('checked') : row.classList.remove('checked');
+  }
+
+  // ── Open item ──
+  function openItem(id) {
+    const s = stashes.find(x => x.id === id);
+    if (!s) return;
+    if (s.type === 'link') {
+      showToast('Opening link… (in real app, opens in browser)');
+    } else {
+      showToast(`Viewing: ${s.name}`);
+    }
+  }
+
+  // ── Modal ──
+  function openAddModal() {
+    document.getElementById('addModal').classList.add('open');
+    document.getElementById('stashContent').value = '';
+    document.getElementById('stashName').value = '';
+    document.getElementById('stashCategory').value = '';
+    document.getElementById('stashCollection').value = '';
+    selectedType = 'link';
+    document.querySelectorAll('.type-btn').forEach(b => {
+      b.classList.toggle('selected', b.dataset.type === 'link');
+    });
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    document.getElementById('addModal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function closeOnOverlay(e) {
+    if (e.target === document.getElementById('addModal')) closeModal();
+  }
+
+  function selectType(type, el) {
+    selectedType = type;
+    document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+
+    const placeholders = {
+      link: 'Paste a link...',
+      grocery: 'Type your grocery items, one per line...',
+      note: 'Type your note...',
+      image: 'Paste an image URL or describe it...'
+    };
+    document.getElementById('stashContent').placeholder = placeholders[type];
+  }
+
+  function onContentInput() {
+    clearTimeout(nameGenTimeout);
+    const content = document.getElementById('stashContent').value;
+    if (content.length > 15) {
+      nameGenTimeout = setTimeout(generateName, 1200);
+    }
+  }
+
+  // ── AI Name generation ──
+  async function generateName() {
+    const content = document.getElementById('stashContent').value.trim();
+    if (!content) return;
+
+    const aiBtn = document.getElementById('aiBtn');
+    const thinking = document.getElementById('thinkingIndicator');
+    const nameInput = document.getElementById('stashName');
+
+    aiBtn.disabled = true;
+    thinking.style.display = 'block';
+    nameInput.value = '';
+
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          messages: [{
+            role: 'user',
+            content: `You are a naming assistant for a personal resource-saving app called Solstice.
+
+The user has saved the following content (type: ${selectedType}):
+"${content}"
+
+Generate a short, descriptive, natural name for this saved item. 
+- For links: summarize what the page is about (4-7 words)
+- For grocery lists: give a context-aware name like "Sunday Market Run" or "Weekly Essentials"
+- For notes: give a concise title
+- For images: describe what it is
+
+Respond with ONLY the name, nothing else. No quotes. No explanation. Max 8 words.`
+          }]
+        })
+      });
+
+      const data = await response.json();
+      const name = data.content?.[0]?.text?.trim() || '';
+      if (name) {
+        nameInput.value = name;
+
+        // Also suggest category if none selected
+        if (!document.getElementById('stashCategory').value) {
+          suggestCategory(content, name);
+        }
+      }
+    } catch (err) {
+      nameInput.placeholder = 'Could not connect to AI — name it yourself!';
+    } finally {
+      aiBtn.disabled = false;
+      thinking.style.display = 'none';
+    }
+  }
+
+  async function suggestCategory(content, name) {
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          messages: [{
+            role: 'user',
+            content: `Categorize this saved item named "${name}" with content: "${content.substring(0, 200)}".
+
+Pick ONE category from: work, personal, shopping, recipes, travel, learning, inspiration, health
+
+Respond with ONLY the category word, lowercase, nothing else.`
+          }]
+        })
+      });
+      const data = await response.json();
+      const cat = data.content?.[0]?.text?.trim()?.toLowerCase();
+      const validCats = ['work','personal','shopping','recipes','travel','learning','inspiration','health'];
+      if (cat && validCats.includes(cat)) {
+        document.getElementById('stashCategory').value = cat;
+      }
+    } catch {}
+  }
+
+  // ── Save ──
+  async function saveStash() {
+    const content = document.getElementById('stashContent').value.trim();
+    let name = document.getElementById('stashName').value.trim();
+    const category = document.getElementById('stashCategory').value;
+    const collection = document.getElementById('stashCollection').value;
+
+    if (!content) { showToast('Add some content first!'); return; }
+
+    const saveBtn = document.getElementById('saveBtn');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving...';
+
+    // Auto-generate name if empty
+    if (!name) {
+      await generateName();
+      name = document.getElementById('stashName').value.trim() || content.substring(0, 40);
+    }
+
+    const items = selectedType === 'grocery' ? content.split('\n').filter(Boolean) : undefined;
+    let domain = undefined;
+    if (selectedType === 'link') {
+      try { domain = new URL(content).hostname.replace('www.', ''); } catch {}
+    }
+
+    const newStash = {
+      id: nextId++,
+      type: selectedType,
+      name,
+      content,
+      preview: content.substring(0, 120),
+      items,
+      checked: items ? items.map(() => false) : undefined,
+      category: category || selectedType,
+      time: 'just now',
+      shared: collection && collection !== 'new' ? collection : null,
+      domain
+    };
+
+    stashes.unshift(newStash);
+    currentFilter = 'all';
+    document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === 0));
+
+    closeModal();
+    render();
+    showToast('✦ Stashed!');
+
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Save to Solstice';
+  }
+
+  // ── Toast ──
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // ── Placeholders ──
+  function showSearch() { showToast('Search coming soon!'); }
+  function showProfile() { showToast('Profile & settings coming soon!'); }
+
+  // ── Share target (PWA) ──
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('share-target')) {
+    const sharedText = params.get('text') || params.get('url') || '';
+    if (sharedText) {
+      setTimeout(() => {
+        openAddModal();
+        document.getElementById('stashContent').value = sharedText;
+        selectedType = sharedText.startsWith('http') ? 'link' : 'note';
+        document.querySelectorAll('.type-btn').forEach(b => {
+          b.classList.toggle('selected', b.dataset.type === selectedType);
+        });
+        generateName();
+      }, 300);
+    }
+  }
+
+  // ── Init ──
+  render();
+</script>
+</body>
+</html>
